@@ -1,0 +1,52 @@
+/* ── GitHub Primer theme — light + dark ── */
+
+:root {
+  --t-bg:           #ffffff;
+  --t-panel:        #f6f8fa;
+  --t-canvas:       #ffffff;
+  --t-border:       #d0d7de;
+  --t-border-muted: #d8dee4;
+  --t-fg:           #1f2328;
+  --t-fg-muted:     #636e7b;
+  --t-fg-subtle:    #6e7781;
+  --t-accent:       #0969da;
+  --t-accent-hover: #0550ae;
+  --t-accent-subtle:#ddf4ff;
+  --t-header-bg:    #24292f;
+  --t-header-fg:    #f0f6fc;
+  --t-hover:        #f3f4f6;
+  --t-row-alt:      #f6f8fa;
+  --t-selected:     #ddf4ff;
+  --t-btn-bg:       #f6f8fa;
+  --t-btn-border:   rgba(31,35,40,.15);
+  --t-btn-shadow:   0 1px 0 rgba(31,35,40,.04);
+  --t-focus-ring:   0 0 0 3px rgba(9,105,218,.3);
+  --t-viewer-bg:    #f6f8fa;
+  --t-radius:       6px;
+  --t-mono:         ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --t-ui:           -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+[data-mode="dark"] {
+  --t-bg:           #0d1117;
+  --t-panel:        #161b22;
+  --t-canvas:       #0d1117;
+  --t-border:       #30363d;
+  --t-border-muted: #21262d;
+  --t-fg:           #e6edf3;
+  --t-fg-muted:     #8b949e;
+  --t-fg-subtle:    #6e7681;
+  --t-accent:       #58a6ff;
+  --t-accent-hover: #79c0ff;
+  --t-accent-subtle:rgba(56,139,253,.15);
+  --t-header-bg:    #161b22;
+  --t-header-fg:    #f0f6fc;
+  --t-hover:        #1c2128;
+  --t-row-alt:      #161b22;
+  --t-selected:     rgba(56,139,253,.15);
+  --t-btn-bg:       #21262d;
+  --t-btn-border:   rgba(240,246,252,.1);
+  --t-btn-shadow:   0 0 transparent;
+  --t-focus-ring:   0 0 0 3px rgba(56,139,253,.4);
+  --t-viewer-bg:    #0d1117;
+}

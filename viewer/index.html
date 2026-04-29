@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#f5f5f5;overflow:hidden}
+  #wrap{position:relative;width:100%;height:100%}
+  canvas{display:block;width:100%!important;height:100%!important}
+  #status{
+    position:absolute;top:10px;left:14px;
+    color:#6666aa;font:11px/1.4 "Segoe UI",monospace;
+    pointer-events:none;
+  }
+  #hint{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#8888bb;font:15px "Segoe UI",sans-serif;pointer-events:none;text-align:center;
+    padding:24px;
+  }
+  #bar{
+    position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:8px;
+    background:rgba(10,10,28,0.7);backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,0.08);border-radius:20px;
+    padding:5px 14px;color:#c0c0e0;
+    font:12px/1.4 "Segoe UI",sans-serif;white-space:nowrap;user-select:none;
+  }
+  #bar button{
+    background:none;border:none;color:#c0c0e0;font-size:14px;
+    cursor:pointer;padding:2px 5px;border-radius:4px;
+  }
+  #bar button:hover{background:rgba(255,255,255,0.1)}
+  #frame-slider{width:140px;accent-color:#7878ff;cursor:pointer}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.166.1",
+    "three/addons/": "https://esm.sh/three@0.166.1/examples/jsm/",
+    "fflate": "https://esm.sh/fflate@0.8.2"
+  }
+}
+</script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="status">Loading G1 model…</div>
+  <div id="hint">← Apply a filter and click a row to preview motion</div>
+  <div id="bar">
+    <button id="btn-play" title="Play / Pause">▶</button>
+    <input id="frame-slider" type="range" min="0" max="100" value="0" step="1">
+    <span id="frame-lbl" style="min-width:72px;text-align:right">0 / 0</span>
+    <button id="btn-slower" title="Slower">⏪</button>
+    <span id="speed-lbl" style="min-width:28px;text-align:center">×1</span>
+    <button id="btn-faster" title="Faster">⏩</button>
+    <span style="width:1px;height:14px;background:rgba(255,255,255,0.15);margin:0 4px"></span>
+    <button id="btn-theme" title="Toggle dark/light">🌙</button>
+  </div>
+</div>
+<script type="module" src="/viewer.js"></script>
+</body></html>

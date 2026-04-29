@@ -1,0 +1,52 @@
+/* ── Default system-neutral theme — light + dark ── */
+
+:root {
+  --t-bg:           #f5f5f5;
+  --t-panel:        #ebebeb;
+  --t-canvas:       #ffffff;
+  --t-border:       #cccccc;
+  --t-border-muted: #dedede;
+  --t-fg:           #1f1f1f;
+  --t-fg-muted:     #5f5f5f;
+  --t-fg-subtle:    #8f8f8f;
+  --t-accent:       #0066cc;
+  --t-accent-hover: #0050a3;
+  --t-accent-subtle:#e0f0ff;
+  --t-header-bg:    #2b2b2b;
+  --t-header-fg:    #eeeeee;
+  --t-hover:        #e8e8e8;
+  --t-row-alt:      #f9f9f9;
+  --t-selected:     #c8e1ff;
+  --t-btn-bg:       #eeeeee;
+  --t-btn-border:   rgba(0,0,0,.18);
+  --t-btn-shadow:   0 1px 0 rgba(0,0,0,.06);
+  --t-focus-ring:   0 0 0 3px rgba(0,102,204,.3);
+  --t-viewer-bg:    #e8e8e8;
+  --t-radius:       4px;
+  --t-mono:         ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+  --t-ui:           system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+[data-mode="dark"] {
+  --t-bg:           #1c1c1c;
+  --t-panel:        #272727;
+  --t-canvas:       #1e1e1e;
+  --t-border:       #3d3d3d;
+  --t-border-muted: #2f2f2f;
+  --t-fg:           #e0e0e0;
+  --t-fg-muted:     #909090;
+  --t-fg-subtle:    #666666;
+  --t-accent:       #4da6ff;
+  --t-accent-hover: #70b8ff;
+  --t-accent-subtle:rgba(77,166,255,.15);
+  --t-header-bg:    #1a1a1a;
+  --t-header-fg:    #e0e0e0;
+  --t-hover:        #2a2a2a;
+  --t-row-alt:      #222222;
+  --t-selected:     rgba(77,166,255,.2);
+  --t-btn-bg:       #2e2e2e;
+  --t-btn-border:   rgba(255,255,255,.1);
+  --t-btn-shadow:   0 0 transparent;
+  --t-focus-ring:   0 0 0 3px rgba(77,166,255,.35);
+  --t-viewer-bg:    #181818;
+}

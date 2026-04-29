@@ -1,0 +1,18 @@
+/* ── Default theme: minimal structural overrides, Gradio default colours ── */
+
+/* ── sidebar ── */
+.filter-sidebar .wrap { gap: 4px !important; }
+.filter-sidebar .gr-accordion { margin-bottom: 2px !important; }
+.filter-sidebar label { font-size: 0.85rem !important; }
+
+/* ── result table: pointer cursor on rows ── */
+#result_table table tbody tr { cursor: pointer; }
+#result_table table tbody tr:hover td { background: rgba(120,120,255,0.08) !important; }
+
+/* ── viewer panel ── */
+#viewer-panel { border-radius: 8px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06); }
+#viewer-panel iframe, #viewer-panel > div { height: 500px !important; }
+
+/* ── selection row buttons ── */
+.sel-btn { min-width: 120px !important; }

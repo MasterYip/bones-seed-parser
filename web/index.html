@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bones-Seed Motion Browser</title>
+<style>
+/* ====================================================================
+   Shared layout — theme tokens come from themes/[name].css
+   ==================================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; background: var(--t-bg); color: var(--t-fg); font-family: var(--t-ui, -apple-system, sans-serif); font-size: 13px; overflow: hidden; }
+
+/* ── Config bar ── */
+#config-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px;
+  background: var(--t-header-bg); border-bottom: 1px solid var(--t-border);
+  flex-shrink: 0;
+}
+#config-bar .logo { font-size: 14px; font-weight: 600; color: var(--t-header-fg); white-space: nowrap; margin-right: 4px; }
+#config-bar > input {
+  flex: 1; min-width: 100px; max-width: 300px;
+  background: rgba(255,255,255,.1); color: var(--t-header-fg);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: var(--t-radius, 6px); padding: 3px 8px; font-size: 12px; font-family: var(--t-mono, monospace);
+}
+#config-bar > input:focus { border-color: var(--t-accent); outline: none; }
+#config-bar > input::placeholder { color: rgba(255,255,255,.4); }
+#load-status { font-size: 11px; color: rgba(255,255,255,.6); white-space: nowrap; min-width: 80px; }
+#load-progress { height: 2px; background: var(--t-accent); width: 0; position: fixed; top: 0; left: 0; transition: width .2s; z-index: 999; }
+
+/* ── Theme picker ── */
+#theme-pick-row { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+#theme-pick-row .sep { width: 1px; height: 14px; background: rgba(255,255,255,.2); margin: 0 2px; flex-shrink: 0; }
+#theme-pick-row button {
+  background: rgba(255,255,255,.08); color: rgba(255,255,255,.75);
+  border: 1px solid rgba(255,255,255,.15); border-radius: var(--t-radius, 6px);
+  padding: 2px 9px; font-size: 11px; cursor: pointer; box-shadow: none; font-weight: 500;
+}
+#theme-pick-row button:hover { background: rgba(255,255,255,.22); color: #fff; border-color: rgba(255,255,255,.3); }
+#theme-pick-row button.tp-active { background: var(--t-accent); color: #fff; border-color: var(--t-accent); }
+#btn-mode { font-size: 14px !important; padding: 1px 6px !important; }
+
+/* ── Buttons (page content) ── */
+button {
+  background: var(--t-btn-bg); color: var(--t-fg);
+  border: 1px solid var(--t-btn-border);
+  border-radius: var(--t-radius, 6px); padding: 4px 12px; font-size: 12px; cursor: pointer; white-space: nowrap;
+  font-weight: 500; box-shadow: var(--t-btn-shadow);
+}
+button:hover { background: var(--t-hover); border-color: var(--t-border); }
+button.primary { background: var(--t-accent); color: #fff; border-color: var(--t-accent); box-shadow: none; }
+button.primary:hover { background: var(--t-accent-hover); border-color: var(--t-accent-hover); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Main layout ── */
+#main { display: flex; height: calc(100vh - 33px); overflow: hidden; }
+
+/* ── Sidebar ── */
+#sidebar {
+  width: 230px; min-width: 180px; max-width: 280px;
+  background: var(--t-panel); border-right: 1px solid var(--t-border);
+  display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+}
+#sidebar-scroll { flex: 1; overflow-y: auto; padding: 6px 8px; display: flex; flex-direction: column; gap: 3px; }
+#sidebar-footer { padding: 6px 8px; border-top: 1px solid var(--t-border); }
+#apply-btn { width: 100%; }
+
+/* Accordion */
+.acc { border: 1px solid var(--t-border); border-radius: var(--t-radius, 6px); overflow: hidden; }
+.acc-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 10px; background: var(--t-panel); cursor: pointer;
+  color: var(--t-fg); font-size: 11px; font-weight: 600; letter-spacing: .02em; user-select: none;
+}
+.acc-head:hover { background: var(--t-hover); }
+.acc-head .chevron { font-size: 9px; transition: transform .15s; }
+.acc.open .acc-head .chevron { transform: rotate(90deg); }
+.acc-body { display: none; padding: 6px; background: var(--t-canvas); }
+.acc.open .acc-body { display: block; }
+
+/* Form controls inside sidebar */
+.field { margin-bottom: 5px; }
+.field label { display: block; color: var(--t-fg); font-size: 11px; font-weight: 600; margin-bottom: 2px; }
+.field input[type=text], .field select {
+  width: 100%; background: var(--t-canvas); color: var(--t-fg);
+  border: 1px solid var(--t-border);
+  border-radius: var(--t-radius, 6px); padding: 3px 8px; font-size: 12px;
+}
+.field input[type=text]:focus, .field select:focus { border-color: var(--t-accent); outline: none; box-shadow: var(--t-focus-ring); }
+.checkbox-group { display: flex; flex-direction: column; gap: 2px; max-height: 120px; overflow-y: auto; }
+.checkbox-group label { display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--t-fg); font-size: 11px; font-weight: normal; }
+.checkbox-group input[type=checkbox] { accent-color: var(--t-accent); cursor: pointer; }
+.range-row { display: flex; align-items: center; gap: 6px; }
+.range-row input[type=range] { flex: 1; accent-color: var(--t-accent); }
+.range-val { font-size: 11px; color: var(--t-fg-muted); min-width: 40px; text-align: right; }
+
+/* ── Right content area ── */
+#content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── 3D Viewer ── */
+#viewer-wrap {
+  height: 320px; flex-shrink: 0; position: relative;
+  background: var(--t-viewer-bg); border-bottom: 1px solid var(--t-border); transition: background .15s;
+}
+#viewer-canvas { display: block; width: 100% !important; height: 100% !important; }
+#viewer-status {
+  position: absolute; top: 8px; left: 10px;
+  color: var(--t-fg-muted); font: 11px var(--t-mono, monospace); pointer-events: none;
+}
+#viewer-hint {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--t-fg-subtle); font-size: 13px; pointer-events: none; text-align: center; padding: 24px;
+}
+#viewer-bar {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(14,16,24,.82); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 18px;
+  padding: 4px 12px; color: #c8d3f5; font-size: 11px; white-space: nowrap; user-select: none;
+}
+#viewer-bar button { background: none !important; border: none !important; color: #c8d3f5 !important; font-size: 13px; padding: 1px 4px; box-shadow: none !important; }
+#viewer-bar button:hover { background: rgba(255,255,255,.12) !important; }
+#frame-slider { width: 120px; accent-color: var(--t-accent); cursor: pointer; }
+#motion-info {
+  flex-shrink: 0; padding: 5px 12px; background: var(--t-panel); border-bottom: 1px solid var(--t-border);
+  font-size: 11px; color: var(--t-fg-muted); min-height: 22px;
+}
+#motion-info b { color: var(--t-accent); }
+
+/* ── Toolbar ── */
+#toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+  background: var(--t-panel); border-bottom: 1px solid var(--t-border); flex-shrink: 0;
+}
+#result-count { flex: 1; color: var(--t-fg-muted); font-size: 11px; }
+
+/* ── Table ── */
+#table-wrap { flex: 1; overflow: auto; background: var(--t-canvas); }
+#result-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#result-table thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--t-panel); color: var(--t-fg);
+  border-bottom: 2px solid var(--t-border);
+  padding: 5px 10px; text-align: left; white-space: nowrap;
+  cursor: pointer; user-select: none; font-weight: 600;
+}
+#result-table thead th:hover { background: var(--t-hover); }
+#result-table thead th.sorted-asc::after { content: " ▲"; font-size: 9px; }
+#result-table thead th.sorted-desc::after { content: " ▼"; font-size: 9px; }
+#result-table tbody td {
+  padding: 4px 10px; border-bottom: 1px solid var(--t-border-muted); color: var(--t-fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;
+  cursor: pointer; background: var(--t-canvas);
+}
+#result-table tbody tr:hover td { background: var(--t-hover) !important; }
+#result-table tbody tr:nth-child(even) td { background: var(--t-row-alt); }
+#result-table tbody tr.selected td { background: var(--t-selected) !important; }
+#result-table td.col-select { text-align: center; cursor: pointer; }
+#result-table td.col-select input[type=checkbox] { accent-color: var(--t-accent); cursor: pointer; pointer-events: none; }
+
+/* ── Selection box ── */
+#sel-box-wrap {
+  flex-shrink: 0; border-top: 1px solid var(--t-border); padding: 4px 10px;
+  background: var(--t-panel);
+}
+#sel-label { font-size: 11px; color: var(--t-fg); font-weight: 600; margin-bottom: 2px; }
+#sel-box {
+  width: 100%; height: 52px; resize: none; background: var(--t-canvas);
+  color: var(--t-fg-muted); border: 1px solid var(--t-border); border-radius: var(--t-radius, 6px);
+  font: 11px var(--t-mono, monospace); padding: 4px 6px;
+}
+
+/* ── Overlay / loading ── */
+#overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+}
+#overlay.visible { display: flex; }
+#overlay-msg {
+  background: var(--t-panel); border: 1px solid var(--t-border);
+  padding: 24px 32px; border-radius: 12px; text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+}
+#overlay-msg p { margin-top: 8px; color: var(--t-fg-muted); font-size: 12px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--t-bg); }
+::-webkit-scrollbar-thumb { background: var(--t-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--t-border-muted, var(--t-border)); }
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three":          "https://esm.sh/three@0.166.1",
+    "three/addons/":  "https://esm.sh/three@0.166.1/examples/jsm/",
+    "fflate":         "https://esm.sh/fflate@0.8.2"
+  }
+}
+</script>
+<!-- Default theme; JS will swap to saved preference -->
+<link id="theme-link" rel="stylesheet" href="themes/github.css">
+</head>
+<body>
+
+<div id="load-progress"></div>
+
+<!-- Config bar -->
+<div id="config-bar">
+  <span class="logo">🦴 Bones-Seed</span>
+  <input id="cfg-meta"  placeholder="Metadata URL (JSON or CSV)" title="Compact JSON index — generate with gen_web_data.py">
+  <input id="cfg-base"  placeholder="Motion base URL (ends with /)" title="Base URL for CSV motion files">
+  <input id="cfg-fbx"   placeholder="G1 FBX URL" title="URL of g1_Zup_robot_01.fbx">
+  <button id="load-btn" class="primary">Load</button>
+  <span id="load-status">No data loaded</span>
+  <span id="theme-pick-row">
+    <button data-tp="default" title="Default theme">Default</button>
+    <button data-tp="github"  title="GitHub Primer">GitHub</button>
+    <button data-tp="vscode"  title="Visual Studio Code">VSCode</button>
+    <span class="sep"></span>
+    <button id="btn-mode" title="Toggle light/dark">🌙</button>
+  </span>
+</div>
+
+<!-- Main -->
+<div id="main">
+
+  <!-- Sidebar filters -->
+  <aside id="sidebar">
+    <div id="sidebar-scroll">
+
+      <div class="acc open" id="acc-content">
+        <div class="acc-head" data-acc="acc-content">
+          <span>📋 Content</span><span class="chevron">▶</span>
+        </div>
+        <div class="acc-body">
+          <div class="field"><label>Name / description</label>
+            <input type="text" id="f-name" placeholder="regex OK…"></div>
+          <div class="field"><label>Package</label>
+            <div id="f-packages" class="checkbox-group"></div></div>
+          <div class="field"><label>Category</label>
+            <div id="f-categories" class="checkbox-group"></div></div>
+          <div class="field"><label>Mirror</label>
+            <select id="f-mirror">
+              <option>All</option>
+              <option>Original only</option>
+              <option>Mirror only</option>
+            </select></div>
+        </div>
+      </div>
+
+      <div class="acc" id="acc-dur">
+        <div class="acc-head" data-acc="acc-dur">
+          <span>⏱ Duration</span><span class="chevron">▶</span>
+        </div>
+        <div class="acc-body">
+          <div class="field"><label>Min frames: <span id="f-min-val">0</span></label>
+            <input type="range" id="f-min" min="0" max="60000" value="0" step="10">
+          </div>
+          <div class="field"><label>Max frames: <span id="f-max-val">60000</span></label>
+            <input type="range" id="f-max" min="0" max="60000" value="60000" step="10">
+          </div>
+        </div>
+      </div>
+
+      <div class="acc" id="acc-motion">
+        <div class="acc-head" data-acc="acc-motion">
+          <span>🏃 Motion Type</span><span class="chevron">▶</span>
+        </div>
+        <div class="acc-body">
+          <div class="field"><label>Type of movement</label>
+            <div id="f-mov-types" class="checkbox-group"></div></div>
+          <div class="field"><label>Body position</label>
+            <div id="f-body-pos" class="checkbox-group"></div></div>
+        </div>
+      </div>
+
+      <div class="acc" id="acc-actor">
+        <div class="acc-head" data-acc="acc-actor">
+          <span>👤 Actor</span><span class="chevron">▶</span>
+        </div>
+        <div class="acc-body">
+          <div class="field"><label>Gender</label>
+            <select id="f-gender"><option>All</option></select></div>
+          <div class="field"><label>Height</label>
+            <div id="f-heights" class="checkbox-group"></div></div>
+        </div>
+      </div>
+
+    </div><!-- sidebar-scroll -->
+    <div id="sidebar-footer">
+      <button id="apply-btn" class="primary">🔍 Apply Filter</button>
+    </div>
+  </aside><!-- sidebar -->
+
+  <!-- Right content -->
+  <div id="content">
+
+    <!-- 3D Viewer -->
+    <div id="viewer-wrap">
+      <canvas id="viewer-canvas"></canvas>
+      <div id="viewer-status">Loading G1 model…</div>
+      <div id="viewer-hint">← Apply a filter and click a row to preview motion</div>
+      <div id="viewer-bar">
+        <button id="btn-play" title="Play/Pause">▶</button>
+        <input id="frame-slider" type="range" min="0" max="100" value="0" step="1">
+        <span id="frame-lbl" style="min-width:64px;text-align:right">0 / 0</span>
+        <button id="btn-slower" title="Slower">⏪</button>
+        <span id="speed-lbl" style="min-width:26px;text-align:center">×1</span>
+        <button id="btn-faster" title="Faster">⏩</button>
+        <span style="width:1px;height:12px;background:rgba(255,255,255,.15);margin:0 2px"></span>
+        <button id="btn-theme" title="Toggle dark/light">🌙</button>
+      </div>
+    </div>
+
+    <!-- Motion info -->
+    <div id="motion-info">Click a row to preview motion.</div>
+
+    <!-- Toolbar -->
+    <div id="toolbar">
+      <span id="result-count">No data loaded.</span>
+      <button id="sel-all-btn">☑ Select All</button>
+      <button id="sel-clear-btn">✕ Clear</button>
+      <button id="refresh-sel-btn">🔄 Refresh Status</button>
+      <button id="export-sel-btn">⬇ Export List</button>
+    </div>
+
+    <!-- Results table -->
+    <div id="table-wrap">
+      <table id="result-table">
+        <thead>
+          <tr id="thead-row"></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Selection box -->
+    <div id="sel-box-wrap">
+      <div id="sel-label">Selected (0)</div>
+      <textarea id="sel-box" readonly placeholder="Selected motion names appear here…"></textarea>
+    </div>
+
+  </div><!-- content -->
+</div><!-- main -->
+
+<!-- Overlay -->
+<div id="overlay"><div id="overlay-msg">
+  <div id="overlay-title" style="font-size:14px;color:#9cdcfe">Loading…</div>
+  <p id="overlay-detail"></p>
+</div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }  from 'three/addons/controls/OrbitControls.js';
+import { FBXLoader }      from 'three/addons/loaders/FBXLoader.js';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// URL hash config helpers
+// ═══════════════════════════════════════════════════════════════════════════
+function readConfig() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  return {
+    meta: h.get('meta') || '',
+    base: h.get('base') || '',
+    fbx:  h.get('fbx')  || '',
+  };
+}
+function writeConfig(cfg) {
+  const h = new URLSearchParams(location.hash.slice(1)); // preserve theme/mode params
+  if (cfg.meta) h.set('meta', cfg.meta); else h.delete('meta');
+  if (cfg.base) h.set('base', cfg.base); else h.delete('base');
+  if (cfg.fbx)  h.set('fbx',  cfg.fbx);  else h.delete('fbx');
+  history.replaceState(null, '', '#' + h.toString());
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Simple CSV parser (handles quoted fields)
+// ═══════════════════════════════════════════════════════════════════════════
+function parseCSV(text) {
+  const lines  = text.split('\n');
+  const header = splitCSVLine(lines[0]);
+  const rows   = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    rows.push(splitCSVLine(line));
+  }
+  return { header, rows };
+}
+function splitCSVLine(line) {
+  const out = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Metadata store
+// ═══════════════════════════════════════════════════════════════════════════
+const DISPLAY_COLS = ['select','move_name','package','category','move_duration_frames',
+  'duration_s','is_mirror','actor_gender','content_short_description','move_g1_path'];
+
+let metaRows  = [];    // array of plain objects (display cols only)
+let metaFull  = [];    // same index, has move_g1_path for CSV loading
+let filterOpts = {
+  packages: [], categories: [], movTypes: [], bodyPos: [], genders: [], heights: [], maxFrames: 60000,
+};
+let filteredRows = [];
+let selectedNames = new Set();
+
+const AUTO_REFRESH_THRESHOLD = 1000;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Metadata loading
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadMetadata(url) {
+  showOverlay('Loading metadata…', url);
+  setProgress(0.05);
+  let data;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const ct = resp.headers.get('content-type') || '';
+    const text = await resp.text();
+    setProgress(0.5);
+
+    if (url.endsWith('.json') || ct.includes('json')) {
+      data = JSON.parse(text);
+      // Expected: { version, total, filters, cols, rows }
+      buildFromJSON(data);
+    } else {
+      // CSV
+      buildFromCSV(parseCSV(text));
+    }
+    setProgress(1.0);
+    updateFilterUI();
+    hideOverlay();
+    setStatus(`Loaded ${metaRows.length.toLocaleString()} motions`);
+  } catch (e) {
+    hideOverlay();
+    setStatus('Error: ' + e.message);
+    console.error(e);
+  }
+}
+
+function buildFromJSON(data) {
+  // Format: { cols: [...], rows: [[...], ...], filters: {...} }
+  const cols = data.cols || DISPLAY_COLS.slice(1);
+  const ci = {};
+  cols.forEach((c, i) => ci[c] = i);
+
+  filterOpts = data.filters || {};
+  filterOpts.maxFrames = filterOpts.max_frames || filterOpts.maxFrames || 60000;
+
+  metaRows = [];
+  for (const r of data.rows) {
+    const obj = {};
+    for (let i = 0; i < cols.length; i++) obj[cols[i]] = r[i];
+    obj.duration_s = ((obj.move_duration_frames || 0) / 120).toFixed(1);
+    metaRows.push(obj);
+  }
+  metaFull = metaRows;
+}
+
+function buildFromCSV({ header, rows }) {
+  const ci = {};
+  header.forEach((c, i) => ci[c.trim()] = i);
+
+  const g = (r, col) => r[ci[col]] ?? '';
+  const allPkgs = new Set(), allCats = new Set(), allMov = new Set(),
+        allPos  = new Set(), allGen  = new Set(), allHt  = new Set();
+  let maxF = 0;
+
+  metaRows = rows.map(r => {
+    const frames = parseInt(g(r, 'move_duration_frames')) || 0;
+    if (frames > maxF) maxF = frames;
+    const pkg = g(r, 'package');      allPkgs.add(pkg);
+    const cat = g(r, 'category');     allCats.add(cat);
+    const mov = g(r, 'content_type_of_movement'); allMov.add(mov);
+    const pos = g(r, 'content_body_position');    allPos.add(pos);
+    const gen = g(r, 'actor_gender'); allGen.add(gen);
+    const ht  = g(r, 'actor_height'); allHt.add(ht);
+    return {
+      move_name:                g(r, 'move_name'),
+      package:                  pkg,
+      category:                 cat,
+      move_duration_frames:     frames,
+      duration_s:               (frames / 120).toFixed(1),
+      is_mirror:                g(r, 'is_mirror'),
+      actor_gender:             gen,
+      actor_height:             ht,
+      content_short_description:g(r, 'content_short_description'),
+      move_g1_path:             g(r, 'move_g1_path'),
+      content_type_of_movement: mov,
+      content_body_position:    pos,
+    };
+  });
+  metaFull = metaRows;
+  filterOpts = {
+    packages:  [...allPkgs].filter(Boolean).sort(),
+    categories:[...allCats].filter(Boolean).sort(),
+    movTypes:  [...allMov].filter(Boolean).sort(),
+    bodyPos:   [...allPos].filter(Boolean).sort(),
+    genders:   [...allGen].filter(Boolean).sort(),
+    heights:   [...allHt].filter(Boolean).sort(),
+    maxFrames: maxF,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Filter UI population
+// ═══════════════════════════════════════════════════════════════════════════
+function buildCheckboxGroup(container, values, groupName) {
+  container.innerHTML = '';
+  values.forEach(v => {
+    const lbl = document.createElement('label');
+    const cb  = document.createElement('input');
+    cb.type = 'checkbox'; cb.name = groupName; cb.value = v;
+    lbl.append(cb, ' ' + v);
+    container.appendChild(lbl);
+  });
+}
+function getChecked(container) {
+  return [...container.querySelectorAll('input:checked')].map(c => c.value);
+}
+
+function updateFilterUI() {
+  buildCheckboxGroup($('f-packages'),  filterOpts.packages  || [], 'pkg');
+  buildCheckboxGroup($('f-categories'),filterOpts.categories|| [], 'cat');
+  buildCheckboxGroup($('f-mov-types'), filterOpts.movTypes  || [], 'mov');
+  buildCheckboxGroup($('f-body-pos'),  filterOpts.bodyPos   || [], 'pos');
+  buildCheckboxGroup($('f-heights'),   filterOpts.heights   || [], 'ht');
+
+  const gsel = $('f-gender');
+  gsel.innerHTML = '<option>All</option>';
+  (filterOpts.genders || []).forEach(g => {
+    const o = document.createElement('option'); o.value = g; o.textContent = g;
+    gsel.appendChild(o);
+  });
+
+  const mx = filterOpts.maxFrames || 60000;
+  $('f-min').max = mx; $('f-min').value = 0; $('f-min-val').textContent = 0;
+  $('f-max').max = mx; $('f-max').value = mx; $('f-max-val').textContent = mx;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Filtering
+// ═══════════════════════════════════════════════════════════════════════════
+function applyFilter() {
+  const namePat  = $('f-name').value.trim();
+  const pkgs     = getChecked($('f-packages'));
+  const cats     = getChecked($('f-categories'));
+  const mirror   = $('f-mirror').value;
+  const minF     = parseInt($('f-min').value) || 0;
+  const maxF     = parseInt($('f-max').value);
+  const movTypes = getChecked($('f-mov-types'));
+  const bodyPos  = getChecked($('f-body-pos'));
+  const gender   = $('f-gender').value;
+  const heights  = getChecked($('f-heights'));
+
+  let rx = null;
+  try { rx = namePat ? new RegExp(namePat, 'i') : null; } catch(_) {}
+
+  filteredRows = metaRows.filter(r => {
+    if (rx && !rx.test(r.move_name) && !rx.test(r.content_short_description)) return false;
+    if (pkgs.length     && !pkgs.includes(r.package))    return false;
+    if (cats.length     && !cats.includes(r.category))   return false;
+    if (mirror === 'Original only' && r.is_mirror === 'True') return false;
+    if (mirror === 'Mirror only'   && r.is_mirror !== 'True') return false;
+    if (r.move_duration_frames < minF) return false;
+    if (maxF && r.move_duration_frames > maxF) return false;
+    if (movTypes.length && !movTypes.includes(r.content_type_of_movement)) return false;
+    if (bodyPos.length  && !bodyPos.includes(r.content_body_position))     return false;
+    if (gender !== 'All' && r.actor_gender !== gender) return false;
+    if (heights.length  && !heights.includes(r.actor_height)) return false;
+    return true;
+  });
+
+  sortCol = null; sortDir = 1;
+  renderTable(filteredRows.length <= AUTO_REFRESH_THRESHOLD ? selectedNames : new Set());
+  $('result-count').textContent =
+    `${filteredRows.length.toLocaleString()} of ${metaRows.length.toLocaleString()} motions`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Table rendering
+// ═══════════════════════════════════════════════════════════════════════════
+const TABLE_COLS = [
+  { key: 'select',                  label: '☑',     width: '30px'  },
+  { key: 'move_name',               label: 'Name',   width: '200px' },
+  { key: 'package',                 label: 'Pkg',    width: '90px'  },
+  { key: 'category',                label: 'Cat',    width: '130px' },
+  { key: 'move_duration_frames',    label: 'Frames', width: '60px', num: true },
+  { key: 'duration_s',              label: 's',      width: '45px', num: true },
+  { key: 'is_mirror',               label: 'Mirror', width: '50px'  },
+  { key: 'actor_gender',            label: 'Sex',    width: '35px'  },
+  { key: 'content_short_description', label: 'Description', width: '260px' },
+];
+
+let sortCol = null, sortDir = 1;
+let _displayedSel = new Set(); // the sel set used in the last render
+
+function buildTableHeader() {
+  const tr = $('thead-row');
+  tr.innerHTML = '';
+  TABLE_COLS.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col.label;
+    th.style.width = col.width;
+    if (col.key !== 'select') {
+      th.style.cursor = 'pointer';
+      th.addEventListener('click', () => {
+        if (sortCol === col.key) sortDir = -sortDir;
+        else { sortCol = col.key; sortDir = 1; }
+        filteredRows.sort((a, b) => {
+          const av = a[col.key] ?? '', bv = b[col.key] ?? '';
+          return (av < bv ? -1 : av > bv ? 1 : 0) * sortDir;
+        });
+        renderTable(_displayedSel);
+        // update header indicators
+        tr.querySelectorAll('th').forEach(t => { t.classList.remove('sorted-asc','sorted-desc'); });
+        th.classList.add(sortDir === 1 ? 'sorted-asc' : 'sorted-desc');
+      });
+    }
+    tr.appendChild(th);
+  });
+}
+
+function renderTable(selSet) {
+  _displayedSel = selSet || selectedNames;
+  const tbody = $('tbody');
+  tbody.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < filteredRows.length; i++) {
+    const row = filteredRows[i];
+    const tr  = document.createElement('tr');
+    tr.dataset.idx = i;
+    if (selectedNames.has(row.move_name)) tr.classList.add('selected');
+
+    TABLE_COLS.forEach(col => {
+      const td = document.createElement('td');
+      td.className = 'col-' + col.key.replace('_','-');
+      if (col.key === 'select') {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = _displayedSel.has(row.move_name);
+        td.className = 'col-select';
+        td.appendChild(cb);
+      } else {
+        td.textContent = row[col.key] ?? '';
+      }
+      tr.appendChild(td);
+    });
+    frag.appendChild(tr);
+  }
+  tbody.appendChild(frag);
+  updateSelBox();
+}
+
+function refreshSelectedStatus() {
+  renderTable(selectedNames);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Row click handling
+// ═══════════════════════════════════════════════════════════════════════════
+$('tbody').addEventListener('click', e => {
+  const tr = e.target.closest('tr');
+  if (!tr) return;
+  const idx  = parseInt(tr.dataset.idx);
+  const row  = filteredRows[idx];
+  if (!row) return;
+
+  const td = e.target.closest('td');
+  if (td && td.classList.contains('col-select')) {
+    // Toggle selection (no re-render)
+    if (selectedNames.has(row.move_name)) {
+      selectedNames.delete(row.move_name);
+      tr.classList.remove('selected');
+    } else {
+      selectedNames.add(row.move_name);
+      tr.classList.add('selected');
+    }
+    // Update checkbox display directly (no full re-render)
+    const cb = td.querySelector('input');
+    if (cb) cb.checked = selectedNames.has(row.move_name);
+    updateSelBox();
+  } else {
+    // Preview motion
+    previewMotion(row);
+  }
+});
+
+function updateSelBox() {
+  const arr = [...selectedNames].sort();
+  $('sel-box').value = arr.join('\n');
+  $('sel-label').textContent = `Selected (${arr.length})`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Motion preview
+// ═══════════════════════════════════════════════════════════════════════════
+async function previewMotion(row) {
+  const baseUrl = $('cfg-base').value.trim().replace(/\/+$/, '');
+  if (!baseUrl || !row.move_g1_path) {
+    setMotionInfo(`<b>${row.move_name}</b> — set Motion base URL to load CSV`);
+    return;
+  }
+  const url = baseUrl + '/' + row.move_g1_path;
+  setMotionInfo(`Loading <b>${row.move_name}</b>…`);
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const csv = await resp.text();
+    if (g1Model) {
+      g1Model.anim = new G1Animation(csv, row.move_name);
+      animFrame = 0; playing = true;
+      $('btn-play').textContent = '⏸';
+      const sl = $('frame-slider');
+      sl.max = g1Model.anim.maxFrame; sl.value = 0;
+      $('frame-lbl').textContent = `0 / ${g1Model.anim.maxFrame}`;
+    }
+    $('viewer-hint').style.display = 'none';
+    setMotionInfo(
+      `<b>${row.move_name}</b> &nbsp;·&nbsp; ${row.package} / ${row.category}`
+      + ` &nbsp;·&nbsp; ${row.move_duration_frames} frames (${row.duration_s}s)`
+      + ` &nbsp;·&nbsp; ${row.actor_gender}`
+    );
+  } catch (e) {
+    setMotionInfo(`<b>${row.move_name}</b> — fetch error: ${e.message}`);
+  }
+}
+
+function setMotionInfo(html) { $('motion-info').innerHTML = html; }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Selection buttons
+// ═══════════════════════════════════════════════════════════════════════════
+$('sel-all-btn').addEventListener('click', () => {
+  filteredRows.forEach(r => selectedNames.add(r.move_name));
+  renderTable(selectedNames);
+});
+$('sel-clear-btn').addEventListener('click', () => {
+  filteredRows.forEach(r => selectedNames.delete(r.move_name));
+  renderTable(selectedNames);
+});
+$('refresh-sel-btn').addEventListener('click', refreshSelectedStatus);
+$('export-sel-btn').addEventListener('click', () => {
+  const text = [...selectedNames].sort().join('\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'selected_motions.txt';
+  a.click();
+});
+$('apply-btn').addEventListener('click', applyFilter);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Three.js — G1 viewer
+// ═══════════════════════════════════════════════════════════════════════════
+class G1Animation {
+  constructor(csvText, name) {
+    this.name = name; this.columns = []; this.frames = []; this.fps = 120;
+    this._parse(csvText);
+    this.maxFrame = Math.max(0, this.frames.length - 1);
+  }
+  _parse(csv) {
+    const lines = csv.trim().split('\n');
+    if (lines.length < 2) return;
+    this.columns = lines[0].split(',').map(s => s.trim());
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(','); const fd = {};
+      for (let j = 0; j < this.columns.length; j++) fd[this.columns[j]] = parseFloat(vals[j]) || 0;
+      this.frames.push(fd);
+    }
+  }
+  getFrameData(frame) {
+    if (!this.frames.length) return null;
+    const f = Math.max(0, Math.min(frame, this.maxFrame));
+    const f0 = Math.floor(f), f1 = Math.min(Math.ceil(f), this.maxFrame), t = f - f0;
+    if (t === 0 || f0 === f1) return Object.assign({}, this.frames[f0]);
+    const a = this.frames[f0], b = this.frames[f1], r = {};
+    for (const c of this.columns) r[c] = a[c] * (1 - t) + b[c] * t;
+    return r;
+  }
+}
+
+const DARK_PARTS = ['ankle_roll_link','rubber_hand','hip_pitch_link','_pelvis_visual','head_link','_logo_link_visual'];
+const MAT_DARK  = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.02,0.02,0.03), metalness:.7, roughness:.15 });
+const MAT_WHITE = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.82,0.82,0.84), metalness:.35, roughness:.3 });
+
+class Model3DG1 {
+  constructor() { this.root = null; this.joints = new Map(); this.restQ = new Map(); this.anim = null; }
+  async load(url) {
+    const loader = new FBXLoader();
+    this.root = await new Promise((ok, err) => loader.load(url, ok, null, err));
+    this.root.rotation.set(-Math.PI/2, 0, 0, 'YXZ');
+    this.root.traverse(c => {
+      if (c.name && (c.name.includes('joint') || c.name === 'root'))
+        if (!this.joints.has(c.name)) this.joints.set(c.name, c);
+    });
+    for (const [n, j] of this.joints) this.restQ.set(n, j.quaternion.clone());
+    const sms = []; this.root.traverse(c => { if (c.isSkinnedMesh) sms.push(c); });
+    for (const sm of sms) {
+      const bone = sm.skeleton?.bones?.[0]; if (!bone) continue;
+      const mesh = new THREE.Mesh(sm.geometry, sm.material);
+      mesh.name = sm.name; mesh.frustumCulled = false; mesh.castShadow = true;
+      mesh.geometry.computeVertexNormals(); bone.add(mesh);
+      sm.parent?.remove(sm); sm.skeleton?.dispose();
+    }
+    const pg = this.root.children.find(c => c.name === '_pelvis_grp');
+    if (pg) this.root.remove(pg);
+    this.root.traverse(c => {
+      if (!c.isMesh) return;
+      const n = (c.name||'').toLowerCase();
+      const old = c.material;
+      c.material = (DARK_PARTS.some(p => n.includes(p)) ? MAT_DARK : MAT_WHITE).clone();
+      if (old?.dispose) old.dispose();
+    });
+    return this;
+  }
+  setFrame(frame) {
+    if (!this.anim) return;
+    const fd = this.anim.getFrameData(frame); if (!fd) return;
+    const root = this.joints.get('floating_base_joint');
+    if (root) {
+      root.position.set((fd.root_translateX||0)*.01,(fd.root_translateY||0)*.01,(fd.root_translateZ||0)*.01);
+      root.rotation.set(
+        THREE.MathUtils.degToRad(fd.root_rotateX||0),
+        THREE.MathUtils.degToRad(fd.root_rotateY||0),
+        THREE.MathUtils.degToRad(fd.root_rotateZ||0),'ZYX');
+    }
+    const ax = new THREE.Vector3(), q = new THREE.Quaternion();
+    for (const [jn, joint] of this.joints) {
+      if (jn === 'floating_base_joint') continue;
+      const angle = fd[jn+'_dof']; if (angle === undefined || isNaN(angle)) continue;
+      if (jn.includes('pitch')||jn.includes('knee')||jn.includes('elbow')) ax.set(0,1,0);
+      else if (jn.includes('roll')) ax.set(1,0,0);
+      else if (jn.includes('yaw'))  ax.set(0,0,1);
+      else ax.set(0,1,0);
+      q.setFromAxisAngle(ax, THREE.MathUtils.degToRad(angle));
+      const rq = this.restQ.get(jn);
+      if (rq) joint.quaternion.copy(rq).multiply(q); else joint.quaternion.copy(q);
+    }
+  }
+}
+
+// ── Theme state ──────────────────────────────────────────────────────────────
+const VIEWER_COLORS = {
+  default: { light:[0xe8e8e8,0xbbbbbb,0xd5d5d5], dark:[0x1c1c1c,0x3d3d3d,0x2a2a2a] },
+  github:  { light:[0xf6f8fa,0xcccccc,0xe0e0e0], dark:[0x0d1117,0x21262d,0x161b22] },
+  vscode:  { light:[0xf3f3f3,0xd8d8d8,0xe8e8e8], dark:[0x1e1e1e,0x3e3e42,0x2d2d30] },
+};
+
+let currentTheme = 'github', currentMode = 'light';
+try {
+  const _hp = new URLSearchParams(location.hash.slice(1));
+  const _pd = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  currentTheme = _hp.get('theme') || localStorage.getItem('bsp-theme') || 'github';
+  currentMode  = _hp.get('mode')  || localStorage.getItem('bsp-mode')  || (_pd ? 'dark' : 'light');
+} catch(_) {}
+let sceneDark = currentMode === 'dark';
+// Apply CSS theme + mode immediately (before renderer init, avoids FOUC)
+$('theme-link').href = `themes/${currentTheme}.css`;
+if (sceneDark) document.documentElement.dataset.mode = 'dark';
+
+// ── Renderer ─────────────────────────────────────────────────────────────────
+const canvas   = $('viewer-canvas');
+const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.CineonToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const _initVC = (VIEWER_COLORS[currentTheme] || VIEWER_COLORS.github)[currentMode];
+renderer.setClearColor(_initVC[0], 1);
+
+const scene = new THREE.Scene(); scene.fog = new THREE.Fog(_initVC[0], 18, 40);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+camera.position.set(3.5, 1.8, 3.5);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.target.set(0, 0.8, 0); controls.maxDistance = 20; controls.minDistance = 0.3;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xbbbbcc, 2.5));
+const key = new THREE.DirectionalLight(0xfff5e8, 2.2);
+key.position.set(3,6,4); key.castShadow = true;
+key.shadow.mapSize.set(1024,1024); key.shadow.camera.near=.1; key.shadow.camera.far=20;
+key.shadow.camera.left=-8; key.shadow.camera.right=8; key.shadow.camera.top=8; key.shadow.camera.bottom=-8;
+scene.add(key);
+scene.add(Object.assign(new THREE.DirectionalLight(0xd0e8ff,1.0), { position: new THREE.Vector3(-4,3,-2) }));
+scene.add(Object.assign(new THREE.DirectionalLight(0xc8d8ff,.7),  { position: new THREE.Vector3(1,4,-5) }));
+
+let currentGrid = new THREE.GridHelper(20, 40, _initVC[1], _initVC[2]);
+scene.add(currentGrid);
+
+function setTheme(name, mode) {
+  currentTheme = name; currentMode = mode; sceneDark = mode === 'dark';
+  const vc = (VIEWER_COLORS[name] || VIEWER_COLORS.github)[mode];
+  // CSS
+  $('theme-link').href = `themes/${name}.css`;
+  if (sceneDark) document.documentElement.dataset.mode = 'dark';
+  else           delete document.documentElement.dataset.mode;
+  // Three.js
+  renderer.setClearColor(vc[0], 1); scene.fog.color.setHex(vc[0]);
+  scene.remove(currentGrid);
+  currentGrid = new THREE.GridHelper(20, 40, vc[1], vc[2]);
+  scene.add(currentGrid);
+  // Button states
+  document.querySelectorAll('#theme-pick-row button[data-tp]').forEach(b =>
+    b.classList.toggle('tp-active', b.dataset.tp === name));
+  const icon = sceneDark ? '☀️' : '🌙';
+  [$('btn-theme'), $('btn-mode')].forEach(b => { if (b) b.textContent = icon; });
+  // Persist
+  try { localStorage.setItem('bsp-theme', name); localStorage.setItem('bsp-mode', mode); } catch(_) {}
+  const h = new URLSearchParams(location.hash.slice(1));
+  h.set('theme', name); h.set('mode', mode);
+  history.replaceState(null, '', '#' + h.toString());
+}
+
+function resizeViewer() {
+  const w = canvas.parentElement?.clientWidth  || 800;
+  const h = canvas.parentElement?.clientHeight || 320;
+  if (w === 0 || h === 0) return;
+  renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+resizeViewer();
+new ResizeObserver(resizeViewer).observe(canvas.parentElement);
+
+let g1Model = null, animFrame = 0, playing = false, lastTs = null;
+const SPEEDS = [0.25, 0.5, 1.0, 1.5, 2.0, 3.0]; let speedIdx = 2;
+
+$('btn-play').addEventListener('click', () => { playing = !playing; $('btn-play').textContent = playing ? '⏸' : '▶'; });
+$('frame-slider').addEventListener('input', () => { animFrame = parseFloat($('frame-slider').value); if (g1Model) g1Model.setFrame(animFrame); });
+$('btn-slower').addEventListener('click', () => { speedIdx = Math.max(0, speedIdx-1); $('speed-lbl').textContent = '×'+SPEEDS[speedIdx]; });
+$('btn-faster').addEventListener('click', () => { speedIdx = Math.min(SPEEDS.length-1, speedIdx+1); $('speed-lbl').textContent = '×'+SPEEDS[speedIdx]; });
+$('btn-theme').addEventListener('click', () => setTheme(currentTheme, sceneDark ? 'light' : 'dark'));
+$('btn-mode').addEventListener('click',  () => setTheme(currentTheme, sceneDark ? 'light' : 'dark'));
+document.querySelectorAll('#theme-pick-row button[data-tp]').forEach(b =>
+  b.addEventListener('click', () => setTheme(b.dataset.tp, currentMode)));
+// Sync initial button states
+setTheme(currentTheme, currentMode);
+
+function renderLoop(ts) {
+  requestAnimationFrame(renderLoop);
+  if (playing && g1Model?.anim) {
+    if (lastTs !== null) {
+      const dt = (ts - lastTs) / 1000;
+      animFrame += dt * (g1Model.anim.fps || 120) * SPEEDS[speedIdx];
+      if (animFrame > g1Model.anim.maxFrame) animFrame = 0;
+    }
+    $('frame-slider').value = animFrame;
+    $('frame-lbl').textContent = Math.floor(animFrame) + ' / ' + g1Model.anim.maxFrame;
+  }
+  lastTs = ts;
+  if (g1Model) g1Model.setFrame(animFrame);
+  controls.update(); renderer.render(scene, camera);
+}
+requestAnimationFrame(renderLoop);
+
+async function loadFBX(url) {
+  $('viewer-status').textContent = 'Loading G1 model…';
+  try {
+    g1Model = await new Model3DG1().load(url);
+    scene.add(g1Model.root);
+    $('viewer-status').textContent = 'Ready — click a row to preview';
+  } catch (e) {
+    $('viewer-status').textContent = 'Model unavailable: ' + e.message;
+    console.warn('[viewer] FBX load failed:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Config bar wiring
+// ═══════════════════════════════════════════════════════════════════════════
+const cfg = readConfig();
+$('cfg-meta').value = cfg.meta;
+$('cfg-base').value = cfg.base;
+$('cfg-fbx').value  = cfg.fbx;
+
+$('load-btn').addEventListener('click', async () => {
+  const meta = $('cfg-meta').value.trim();
+  const base = $('cfg-base').value.trim();
+  const fbx  = $('cfg-fbx').value.trim();
+  writeConfig({ meta, base, fbx });
+  if (fbx)  loadFBX(fbx);
+  if (meta) await loadMetadata(meta);
+  buildTableHeader();
+});
+
+// Auto-load if hash params present on page load
+if (cfg.meta || cfg.fbx) {
+  if (cfg.fbx)  loadFBX(cfg.fbx);
+  if (cfg.meta) loadMetadata(cfg.meta).then(() => { buildTableHeader(); });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Accordion toggle
+// ═══════════════════════════════════════════════════════════════════════════
+document.querySelectorAll('.acc-head').forEach(head => {
+  head.addEventListener('click', () => {
+    head.closest('.acc').classList.toggle('open');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Range slider labels
+// ═══════════════════════════════════════════════════════════════════════════
+$('f-min').addEventListener('input', () => $('f-min-val').textContent = $('f-min').value);
+$('f-max').addEventListener('input', () => $('f-max-val').textContent = $('f-max').value);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════════════════════
+function $(id) { return document.getElementById(id); }
+function setStatus(msg) { $('load-status').textContent = msg; }
+function showOverlay(title, detail) {
+  $('overlay-title').textContent = title;
+  $('overlay-detail').textContent = detail || '';
+  $('overlay').classList.add('visible');
+}
+function hideOverlay() { $('overlay').classList.remove('visible'); }
+function setProgress(v) { $('load-progress').style.width = (v*100)+'%'; if (v>=1) setTimeout(()=>$('load-progress').style.width='0',400); }
+
+// Build empty header on load
+buildTableHeader();
+</script>
+</body>
+</html>

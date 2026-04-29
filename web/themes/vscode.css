@@ -1,0 +1,52 @@
+/* ── Visual Studio Code theme — Light+ / Dark+ ── */
+
+:root {
+  --t-bg:           #ffffff;
+  --t-panel:        #f3f3f3;
+  --t-canvas:       #ffffff;
+  --t-border:       #e7e7e7;
+  --t-border-muted: #efefef;
+  --t-fg:           #333333;
+  --t-fg-muted:     #717171;
+  --t-fg-subtle:    #9d9d9d;
+  --t-accent:       #005fb8;
+  --t-accent-hover: #0073e6;
+  --t-accent-subtle:#e8f3ff;
+  --t-header-bg:    #3c3c3c;
+  --t-header-fg:    #cccccc;
+  --t-hover:        #e8e8e8;
+  --t-row-alt:      #f7f7f7;
+  --t-selected:     #add6ff;
+  --t-btn-bg:       #f3f3f3;
+  --t-btn-border:   #c5c5c5;
+  --t-btn-shadow:   0 1px 0 rgba(0,0,0,.06);
+  --t-focus-ring:   0 0 0 2px rgba(0,95,184,.4);
+  --t-viewer-bg:    #f3f3f3;
+  --t-radius:       3px;
+  --t-mono:         Consolas, "Courier New", monospace;
+  --t-ui:           -apple-system, "Segoe UI", sans-serif;
+}
+
+[data-mode="dark"] {
+  --t-bg:           #1e1e1e;
+  --t-panel:        #252526;
+  --t-canvas:       #1e1e1e;
+  --t-border:       #3e3e42;
+  --t-border-muted: #2d2d30;
+  --t-fg:           #cccccc;
+  --t-fg-muted:     #8c8c8c;
+  --t-fg-subtle:    #6b6b6b;
+  --t-accent:       #007acc;
+  --t-accent-hover: #1a97db;
+  --t-accent-subtle:rgba(0,122,204,.2);
+  --t-header-bg:    #323233;
+  --t-header-fg:    #cccccc;
+  --t-hover:        #2a2d2e;
+  --t-row-alt:      #252526;
+  --t-selected:     #094771;
+  --t-btn-bg:       #3a3a3a;
+  --t-btn-border:   #555555;
+  --t-btn-shadow:   0 0 transparent;
+  --t-focus-ring:   0 0 0 2px rgba(0,122,204,.5);
+  --t-viewer-bg:    #1e1e1e;
+}

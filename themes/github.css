@@ -1,0 +1,112 @@
+/* ── GitHub Primer — auto light/dark ── */
+:root {
+  --t-bg: #ffffff; --t-panel: #f6f8fa; --t-border: #d0d7de; --t-border-muted: #d8dee4;
+  --t-fg: #1f2328; --t-fg-muted: #636e7b; --t-accent: #0969da; --t-accent-hover: #0550ae;
+  --t-hover: #f3f4f6; --t-row-alt: #f6f8fa; --t-selected: #ddf4ff;
+  --t-btn-bg: #f6f8fa; --t-btn-border: rgba(31,35,40,.15); --t-btn-shadow: 0 1px 0 rgba(31,35,40,.04);
+  --t-focus-ring: 0 0 0 3px rgba(9,105,218,.3); --t-code-bg: #f6f8fa;
+  --t-radius: 6px; --t-mono: ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --t-bg: #0d1117; --t-panel: #161b22; --t-border: #30363d; --t-border-muted: #21262d;
+  --t-fg: #e6edf3; --t-fg-muted: #8b949e; --t-accent: #58a6ff; --t-accent-hover: #79c0ff;
+  --t-hover: #1c2128; --t-row-alt: #161b22; --t-selected: rgba(56,139,253,.15);
+  --t-btn-bg: #21262d; --t-btn-border: rgba(240,246,252,.1); --t-btn-shadow: 0 0 transparent;
+  --t-focus-ring: 0 0 0 3px rgba(56,139,253,.4); --t-code-bg: #161b22;
+} }
+
+/* ── Shared Gradio overrides ── */
+.gradio-container {
+  background: var(--t-bg) !important; color: var(--t-fg) !important;
+  font-family: -apple-system, "Segoe UI", var(--t-mono, sans-serif) !important;
+}
+.gr-form, .gr-box, .gr-block, .gr-group {
+  background: var(--t-panel) !important; border: 1px solid var(--t-border) !important;
+  border-radius: var(--t-radius, 6px) !important;
+}
+.gr-accordion > .label-wrap, .gr-accordion > button {
+  background: var(--t-panel) !important; color: var(--t-fg) !important;
+  border-bottom: 1px solid var(--t-border) !important;
+  font-size: 0.82rem !important; font-weight: 600 !important; padding: 5px 10px !important;
+}
+.gr-accordion > button:hover { background: var(--t-hover) !important; }
+label, .block > .wrap > .label-wrap {
+  color: var(--t-fg) !important; font-size: 0.82rem !important; font-weight: 600 !important;
+}
+textarea, input[type="text"], input[type="number"], .gr-textbox textarea, .gr-dropdown select {
+  background: var(--t-bg) !important; color: var(--t-fg) !important;
+  border: 1px solid var(--t-border) !important; border-radius: var(--t-radius, 6px) !important;
+  font-size: 0.85rem !important;
+}
+textarea:focus, input[type="text"]:focus, input[type="number"]:focus {
+  border-color: var(--t-accent) !important; outline: none !important;
+  box-shadow: var(--t-focus-ring) !important;
+}
+input[type="range"] { accent-color: var(--t-accent) !important; }
+.gr-radio label, .gr-checkbox-group label {
+  color: var(--t-fg) !important; font-size: 0.82rem !important;
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--t-accent) !important; }
+.gr-button-primary {
+  background: var(--t-accent) !important; color: #fff !important;
+  border: 1px solid var(--t-accent) !important; border-radius: var(--t-radius, 6px) !important;
+  font-size: 0.85rem !important; font-weight: 500 !important; padding: 5px 16px !important;
+  cursor: pointer !important; box-shadow: var(--t-btn-shadow) !important;
+}
+.gr-button-primary:hover { background: var(--t-accent-hover) !important; }
+.gr-button-secondary, button:not(.gr-button-primary) {
+  background: var(--t-btn-bg) !important; color: var(--t-fg) !important;
+  border: 1px solid var(--t-btn-border) !important; border-radius: var(--t-radius, 6px) !important;
+  font-size: 0.82rem !important; font-weight: 500 !important;
+  cursor: pointer !important; box-shadow: var(--t-btn-shadow) !important;
+}
+.gr-button-secondary:hover, button:not(.gr-button-primary):hover {
+  background: var(--t-hover) !important; border-color: var(--t-border) !important;
+}
+.tab-nav button {
+  background: var(--t-panel) !important; color: var(--t-fg-muted, #888) !important;
+  border: none !important; border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important; font-size: 0.85rem !important; padding: 6px 16px !important;
+}
+.tab-nav button.selected {
+  color: var(--t-fg) !important; border-bottom-color: var(--t-accent) !important;
+  background: var(--t-bg) !important; font-weight: 600 !important;
+}
+.gr-markdown h2 {
+  color: var(--t-fg) !important; font-weight: 600 !important; margin: 6px 0 !important;
+  padding-bottom: 4px !important; border-bottom: 1px solid var(--t-border) !important;
+}
+.gr-markdown p  { color: var(--t-fg-muted, #666) !important; font-size: 0.85rem !important; }
+.gr-markdown code {
+  background: var(--t-code-bg) !important; color: var(--t-fg) !important;
+  padding: 2px 5px !important; border-radius: 4px !important;
+  font-family: var(--t-mono, monospace) !important; font-size: 0.80rem !important;
+  border: 1px solid var(--t-border) !important;
+}
+#result_table table { background: var(--t-bg) !important; font-size: 0.82rem !important; }
+#result_table table thead th {
+  background: var(--t-panel) !important; color: var(--t-fg) !important;
+  border-bottom: 2px solid var(--t-border) !important; font-weight: 600 !important;
+  position: sticky; top: 0; padding: 5px 10px !important;
+}
+#result_table table tbody tr { cursor: pointer; }
+#result_table table tbody td {
+  background: var(--t-bg) !important; color: var(--t-fg) !important;
+  border-bottom: 1px solid var(--t-border-muted) !important; padding: 4px 10px !important;
+}
+#result_table table tbody tr:hover td { background: var(--t-hover) !important; }
+#result_table table tbody tr:nth-child(even) td { background: var(--t-row-alt) !important; }
+#viewer-panel {
+  border-radius: var(--t-radius, 6px); overflow: hidden; border: 1px solid var(--t-border);
+}
+#viewer-panel iframe, #viewer-panel > div { height: 500px !important; }
+.filter-sidebar .wrap { gap: 4px !important; }
+.filter-sidebar .gr-accordion { margin-bottom: 2px !important; }
+.filter-sidebar label { font-size: 0.85rem !important; }
+.filter-sidebar { border-right: 1px solid var(--t-border); padding-right: 8px; }
+.sel-btn { min-width: 120px !important; }
+.refresh-btn { min-width: 200px !important; }
+#export_log textarea {
+  font-family: var(--t-mono, monospace) !important; font-size: 0.80rem !important;
+  background: var(--t-code-bg) !important; color: var(--t-fg) !important;
+}

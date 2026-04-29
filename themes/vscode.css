@@ -1,0 +1,112 @@
+/* ── VSCode Light+ / Dark+ ── */
+:root {
+  --t-bg: #ffffff; --t-panel: #f3f3f3; --t-border: #e7e7e7; --t-border-muted: #efefef;
+  --t-fg: #333333; --t-fg-muted: #717171; --t-accent: #005fb8; --t-accent-hover: #0073e6;
+  --t-hover: #e8e8e8; --t-row-alt: #f7f7f7; --t-selected: #add6ff;
+  --t-btn-bg: #f3f3f3; --t-btn-border: #c5c5c5; --t-btn-shadow: 0 1px 0 rgba(0,0,0,.06);
+  --t-focus-ring: 0 0 0 2px rgba(0,95,184,.4); --t-code-bg: #f3f3f3;
+  --t-radius: 3px; --t-mono: Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --t-bg: #1e1e1e; --t-panel: #252526; --t-border: #3e3e42; --t-border-muted: #2d2d30;
+  --t-fg: #cccccc; --t-fg-muted: #8c8c8c; --t-accent: #007acc; --t-accent-hover: #1a97db;
+  --t-hover: #2a2d2e; --t-row-alt: #252526; --t-selected: #094771;
+  --t-btn-bg: #3a3a3a; --t-btn-border: #555555; --t-btn-shadow: 0 0 transparent;
+  --t-focus-ring: 0 0 0 2px rgba(0,122,204,.5); --t-code-bg: #0d0d0d;
+} }
+
+/* ── Shared Gradio overrides ── */
+.gradio-container {
+  background: var(--t-bg) !important; color: var(--t-fg) !important;
+  font-family: -apple-system, "Segoe UI", var(--t-mono, sans-serif) !important;
+}
+.gr-form, .gr-box, .gr-block, .gr-group {
+  background: var(--t-panel) !important; border: 1px solid var(--t-border) !important;
+  border-radius: var(--t-radius, 6px) !important;
+}
+.gr-accordion > .label-wrap, .gr-accordion > button {
+  background: var(--t-panel) !important; color: var(--t-fg) !important;
+  border-bottom: 1px solid var(--t-border) !important;
+  font-size: 0.82rem !important; font-weight: 600 !important; padding: 5px 10px !important;
+}
+.gr-accordion > button:hover { background: var(--t-hover) !important; }
+label, .block > .wrap > .label-wrap {
+  color: var(--t-fg) !important; font-size: 0.82rem !important; font-weight: 600 !important;
+}
+textarea, input[type="text"], input[type="number"], .gr-textbox textarea, .gr-dropdown select {
+  background: var(--t-bg) !important; color: var(--t-fg) !important;
+  border: 1px solid var(--t-border) !important; border-radius: var(--t-radius, 6px) !important;
+  font-size: 0.85rem !important;
+}
+textarea:focus, input[type="text"]:focus, input[type="number"]:focus {
+  border-color: var(--t-accent) !important; outline: none !important;
+  box-shadow: var(--t-focus-ring) !important;
+}
+input[type="range"] { accent-color: var(--t-accent) !important; }
+.gr-radio label, .gr-checkbox-group label {
+  color: var(--t-fg) !important; font-size: 0.82rem !important;
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--t-accent) !important; }
+.gr-button-primary {
+  background: var(--t-accent) !important; color: #fff !important;
+  border: 1px solid var(--t-accent) !important; border-radius: var(--t-radius, 6px) !important;
+  font-size: 0.85rem !important; font-weight: 500 !important; padding: 5px 16px !important;
+  cursor: pointer !important; box-shadow: var(--t-btn-shadow) !important;
+}
+.gr-button-primary:hover { background: var(--t-accent-hover) !important; }
+.gr-button-secondary, button:not(.gr-button-primary) {
+  background: var(--t-btn-bg) !important; color: var(--t-fg) !important;
+  border: 1px solid var(--t-btn-border) !important; border-radius: var(--t-radius, 6px) !important;
+  font-size: 0.82rem !important; font-weight: 500 !important;
+  cursor: pointer !important; box-shadow: var(--t-btn-shadow) !important;
+}
+.gr-button-secondary:hover, button:not(.gr-button-primary):hover {
+  background: var(--t-hover) !important; border-color: var(--t-border) !important;
+}
+.tab-nav button {
+  background: var(--t-panel) !important; color: var(--t-fg-muted, #888) !important;
+  border: none !important; border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important; font-size: 0.85rem !important; padding: 6px 16px !important;
+}
+.tab-nav button.selected {
+  color: var(--t-fg) !important; border-bottom-color: var(--t-accent) !important;
+  background: var(--t-bg) !important; font-weight: 600 !important;
+}
+.gr-markdown h2 {
+  color: var(--t-fg) !important; font-weight: 600 !important; margin: 6px 0 !important;
+  padding-bottom: 4px !important; border-bottom: 1px solid var(--t-border) !important;
+}
+.gr-markdown p  { color: var(--t-fg-muted, #666) !important; font-size: 0.85rem !important; }
+.gr-markdown code {
+  background: var(--t-code-bg) !important; color: var(--t-fg) !important;
+  padding: 2px 5px !important; border-radius: 4px !important;
+  font-family: var(--t-mono, monospace) !important; font-size: 0.80rem !important;
+  border: 1px solid var(--t-border) !important;
+}
+#result_table table { background: var(--t-bg) !important; font-size: 0.82rem !important; }
+#result_table table thead th {
+  background: var(--t-panel) !important; color: var(--t-fg) !important;
+  border-bottom: 2px solid var(--t-border) !important; font-weight: 600 !important;
+  position: sticky; top: 0; padding: 5px 10px !important;
+}
+#result_table table tbody tr { cursor: pointer; }
+#result_table table tbody td {
+  background: var(--t-bg) !important; color: var(--t-fg) !important;
+  border-bottom: 1px solid var(--t-border-muted) !important; padding: 4px 10px !important;
+}
+#result_table table tbody tr:hover td { background: var(--t-hover) !important; }
+#result_table table tbody tr:nth-child(even) td { background: var(--t-row-alt) !important; }
+#viewer-panel {
+  border-radius: var(--t-radius, 6px); overflow: hidden; border: 1px solid var(--t-border);
+}
+#viewer-panel iframe, #viewer-panel > div { height: 500px !important; }
+.filter-sidebar .wrap { gap: 4px !important; }
+.filter-sidebar .gr-accordion { margin-bottom: 2px !important; }
+.filter-sidebar label { font-size: 0.85rem !important; }
+.filter-sidebar { border-right: 1px solid var(--t-border); padding-right: 8px; }
+.sel-btn { min-width: 120px !important; }
+.refresh-btn { min-width: 200px !important; }
+#export_log textarea {
+  font-family: var(--t-mono, monospace) !important; font-size: 0.80rem !important;
+  background: var(--t-code-bg) !important; color: var(--t-fg) !important;
+}
