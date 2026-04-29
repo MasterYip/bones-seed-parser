@@ -2,9 +2,10 @@
 
 Browse, filter, and batch-export [Bones-seed](https://bones-seed.com/) G1 motions to NPZ — no Isaac Lab required.
 
+![Page Preview](./docs/page.png)
+
 > [!WARNING]
 > This repository is still under development. Documentation is incomplete and the code may contain bugs.
-
 
 ## Installation
 
