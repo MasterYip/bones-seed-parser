@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bones_seed_parser"
+version = "0.1.0"
+description = "Browse, filter, and batch-export Bones-seed G1 motions to NPZ"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+authors = [
+    { name = "MasterYip" },
+]
+keywords = [
+    "bones-seed",
+    "motion-capture",
+    "g1",
+    "humanoid",
+    "npz",
+    "forward-kinematics",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "torch",
+]
+
+[project.optional-dependencies]
+converter = [
+    "pytorch-kinematics",
+    "tqdm",
+]
+gui = [
+    "gradio>=4",
+]
+all = [
+    "bones_seed_parser[converter,gui]",
+]
+
+[project.scripts]
+bones-seed = "bones_seed_parser.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["bones_seed_parser*"]
