@@ -409,7 +409,7 @@ def create_gui(
                 df = df[df["is_mirror"] == True]  # noqa: E712
 
             _filtered_df[0] = df
-            # Preserve existing selections — do NOT reset _selected_names
+            # Preserve existing selections across filter changes
             info = f"**{len(df):,} motions** matched."
             # Auto-refresh checkboxes only for small result sets
             if len(df) <= _AUTO_REFRESH_THRESHOLD:
@@ -479,18 +479,19 @@ def create_gui(
         ):
             from .converter import BonesCSVConverter
 
-            if _filtered_df[0] is None or len(_filtered_df[0]) == 0:
-                yield "No filter results — apply a filter first."
-                return
-
-            df = _filtered_df[0]
             if selection_text.strip().upper() == "ALL" or not selection_text.strip():
-                selected_df = df
+                # No explicit selection → export current filter results
+                if _filtered_df[0] is None or len(_filtered_df[0]) == 0:
+                    yield "No filter results — apply a filter first."
+                    return
+                selected_df = _filtered_df[0]
             else:
+                # Resolve selected names against the FULL dataset so cross-filter
+                # selections (picked across multiple filter passes) all export.
                 names = [n.strip() for n in selection_text.strip().splitlines() if n.strip()]
-                selected_df = df[df["move_name"].isin(names)]
+                selected_df = parser.df[parser.df["move_name"].isin(names)]
                 if len(selected_df) == 0:
-                    yield "No matching move names found in current filter results."
+                    yield "No matching move names found."
                     return
 
             # ---- Isaac Lab backend: generate CLI command ----
