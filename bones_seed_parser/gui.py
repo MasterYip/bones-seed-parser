@@ -353,11 +353,11 @@ def create_gui(
                             with gr.Column():
                                 urdf_box = gr.Textbox(
                                     label="G1 URDF path (required for FK)",
-                                    value="./source/rl_tracker/rl_tracker/assets/unitree_description/urdf/g1/main.urdf",
+                                    value="../../source/rl_tracker/rl_tracker/assets/unitree_description/urdf/g1/main.urdf",
                                 )
                                 out_dir_box = gr.Textbox(
                                     label="Output directory",
-                                    value="./artifacts/npz_export",
+                                    value="./motion_export",
                                 )
                                 out_struct_radio = gr.Radio(
                                     choices=["Named folder  (name/motion.npz)", "Flat  (name.npz)"],

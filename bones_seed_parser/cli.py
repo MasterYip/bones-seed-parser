@@ -251,10 +251,10 @@ def _parser_convert(sub) -> argparse.ArgumentParser:
     )
     _add_bones_seed_arg(p)
     _add_metadata_version_arg(p)
-    _URDF_DEFAULT = "./source/rl_tracker/rl_tracker/assets/unitree_description/urdf/g1/main.urdf"
+    _URDF_DEFAULT = "../../source/rl_tracker/rl_tracker/assets/unitree_description/urdf/g1/main.urdf"
     p.add_argument("--urdf",        default=_URDF_DEFAULT, metavar="PATH",
                    help="Path to the G1 URDF file (default: %(default)s).")
-    p.add_argument("--output-dir",  default="./artifacts/npz_export", metavar="DIR",
+    p.add_argument("--output-dir",  default="./motion_export", metavar="DIR",
                    help="Root directory for NPZ output.")
     p.add_argument("--fps",         default=50, type=int, help="Output FPS.")
     p.add_argument("--input-fps",   default=120, type=int, help="Source FPS.")
@@ -309,7 +309,7 @@ def _parser_convert_one(sub) -> argparse.ArgumentParser:
         help="Convert a single bones-seed CSV to NPZ.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    _URDF_DEFAULT = "./source/rl_tracker/rl_tracker/assets/unitree_description/urdf/g1/main.urdf"
+    _URDF_DEFAULT = "../../source/rl_tracker/rl_tracker/assets/unitree_description/urdf/g1/main.urdf"
     p.add_argument("--csv",        required=True, metavar="PATH",
                    help="Input CSV file.")
     p.add_argument("--output",     required=True, metavar="PATH",
