@@ -297,7 +297,7 @@ def create_gui(
 
         with gr.Row(equal_height=False):
             gr.Markdown(
-                "## 🦴 Bones-Seed Motion Browser\n"
+                "# 🦴 Bones-Seed Motion Browser\n"
                 f"Dataset: `{bones_seed_base}` — **{len(parser):,} motions** loaded"
             )
             # theme_radio = gr.Radio(
