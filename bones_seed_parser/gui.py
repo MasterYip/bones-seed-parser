@@ -245,13 +245,16 @@ def create_gui(
     parser = BonesSeedParser(bones_seed_base, metadata_version)
 
     # Pre-compute option lists
-    pkgs      = parser.list_packages()
-    cats      = parser.list_categories()
-    mov_types = parser.list_movement_types()
-    bod_pos   = parser.list_body_positions()
-    heights   = parser.list_actor_heights()
-    genders   = ["All"] + parser.list_actor_genders()
-    max_frames = int(parser.df["move_duration_frames"].max())
+    pkgs           = parser.list_packages()
+    cats           = parser.list_categories()
+    mov_types      = parser.list_movement_types()
+    bod_pos        = parser.list_body_positions()
+    heights        = parser.list_actor_heights()
+    genders        = ["All"] + parser.list_actor_genders()
+    max_frames     = int(parser.df["move_duration_frames"].max())
+    props_vals     = sorted(parser.df["content_props"].dropna().astype(str).unique().tolist())
+    rigplay_vals   = sorted(parser.df["content_all_rigplay_styles"].dropna().astype(str).unique().tolist())
+    uni_style_vals = sorted(parser.df["content_uniform_style"].dropna().astype(str).unique().tolist())
 
     # Shared mutable state (wrapped in list to allow closure mutation)
     _filtered_df: list[Optional[pd.DataFrame]] = [None]
@@ -268,6 +271,29 @@ def create_gui(
 
         # Inject active theme CSS (swapped at runtime by the radio below)
         theme_css_html = gr.HTML(value=_theme_html(initial_theme))
+
+        # Static structural CSS — height-locked info panel + meta grid
+        gr.HTML(value="""<div style='display:none'><style>
+#motion-info-panel{height:500px!important;overflow:hidden!important;min-width:0!important;}
+#motion-info-panel>.block,#motion-info-panel>div>.block{
+  height:100%!important;max-height:500px!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  padding:0!important;margin:0!important;box-sizing:border-box!important;
+}
+.meta-panel{padding:10px 14px;box-sizing:border-box;}
+.meta-title{
+  font-size:.88em;font-weight:700;
+  margin-bottom:8px;padding-bottom:6px;
+  border-bottom:1px solid var(--border-color-primary,#555);
+  word-break:break-all;line-height:1.4;
+}
+.meta-grid{
+  display:grid;grid-template-columns:max-content 1fr;
+  gap:2px 10px;font-size:.80em;line-height:1.5;
+}
+.mk{font-weight:600;opacity:.65;white-space:nowrap;align-self:start;padding-top:1px;}
+.mv{word-break:break-word;align-self:start;}
+</style></div>""")
 
         with gr.Row(equal_height=False):
             gr.Markdown(
@@ -294,6 +320,11 @@ def create_gui(
                         label="Name / description (regex OK)",
                         placeholder="walk, run, jump…",
                     )
+                    name_scope_radio = gr.Radio(
+                        choices=["Name only", "Name + short desc", "All text fields"],
+                        value="All text fields",
+                        label="Search scope",
+                    )
                     pkg_check = gr.CheckboxGroup(choices=pkgs, label="Package", value=[])
                     cat_check = gr.CheckboxGroup(choices=cats, label="Category", value=[])
                     mirror_radio = gr.Radio(
@@ -312,6 +343,20 @@ def create_gui(
                                               label="Type of movement", value=[])
                     bod_pos_dd  = gr.Dropdown(choices=bod_pos,   multiselect=True,
                                               label="Body position",   value=[])
+                    props_dd        = gr.Dropdown(choices=props_vals, multiselect=True,
+                                                  label="Props", value=[])
+                    rigplay_dd      = gr.Dropdown(choices=rigplay_vals, multiselect=True,
+                                                  label="Rigplay style", value=[])
+                    uni_style_dd    = gr.Dropdown(choices=uni_style_vals, multiselect=True,
+                                                  label="Uniform style", value=[])
+                    horiz_radio     = gr.Radio(choices=["All", "Yes", "No"], value="All",
+                                              label="Horizontal movement")
+                    vert_radio      = gr.Radio(choices=["All", "Yes", "No"], value="All",
+                                              label="Vertical movement")
+                    complex_radio   = gr.Radio(choices=["All", "Yes", "No"], value="All",
+                                              label="Complex action")
+                    repeated_radio  = gr.Radio(choices=["All", "Yes", "No"], value="All",
+                                              label="Repeated action")
 
                 with gr.Accordion("👤 Actor", open=False):
                     gender_radio = gr.Radio(choices=genders, value="All",
@@ -322,8 +367,14 @@ def create_gui(
             # ── RIGHT: results + viewer ────────────────────────────────
             with gr.Column(scale=4):
 
-                motion_info = gr.Markdown("*Click a row to preview the motion.*")
-                gr.HTML(value=viewer_html, elem_id="viewer-panel")
+                with gr.Row(equal_height=True):
+                    with gr.Column(scale=1, min_width=200, elem_id="motion-info-panel"):
+                        motion_info = gr.HTML(
+                            value='<div class="meta-panel"><em style="opacity:.5">Click a row to see all metadata.</em></div>',
+                            elem_id="motion-info-md",
+                        )
+                    with gr.Column(scale=3):
+                        gr.HTML(value=viewer_html, elem_id="viewer-panel")
 
                 result_info = gr.Markdown("*Apply filter to see results.*")
 
@@ -335,8 +386,9 @@ def create_gui(
                 )
 
                 with gr.Row():
-                    select_all_btn   = gr.Button("☑ Select All",            elem_classes=["sel-btn"])
-                    clear_btn        = gr.Button("✕ Clear",                  elem_classes=["sel-btn"])
+                    select_all_btn   = gr.Button("☑ Select All",              elem_classes=["sel-btn"])
+                    add_conj_btn     = gr.Button("⇄ Add Conjugates",           elem_classes=["sel-btn"])
+                    clear_btn        = gr.Button("✕ Clear",                    elem_classes=["sel-btn"])
                     refresh_sel_btn  = gr.Button("🔄 Refresh Selected Status", elem_classes=["refresh-btn"])
 
                 selection_box = gr.Textbox(
@@ -386,15 +438,31 @@ def create_gui(
         # ------------------------------------------------------------------ #
 
         def apply_filter(
-            name_pat, pkgs_sel, cats_sel, mirror_sel,
+            name_pat, name_scope, pkgs_sel, cats_sel, mirror_sel,
             min_dur, max_dur, mov_types_sel, bod_pos_sel,
             gender_sel, height_sel,
+            props_sel, rigplay_sel, uni_style_sel,
+            horiz_sel, vert_sel, complex_sel, repeated_sel,
         ):
+            import re as _re
             exclude_mirrors = mirror_sel == "Original only"
             mirror_only     = mirror_sel == "Mirror only"
 
+            # Resolve search scope — pass name_pattern only for "All text fields";
+            # otherwise filter manually after the other filters are applied.
+            if name_pat and name_scope != "All text fields":
+                base_name_pat = None
+                _scope_cols = (
+                    ["move_name"]
+                    if name_scope == "Name only"
+                    else ["move_name", "content_short_description", "content_short_description_2"]
+                )
+            else:
+                base_name_pat = name_pat or None
+                _scope_cols = None
+
             df = parser.filter(
-                name_pattern    = name_pat or None,
+                name_pattern    = base_name_pat,
                 packages        = pkgs_sel    or None,
                 categories      = cats_sel    or None,
                 exclude_mirrors = exclude_mirrors,
@@ -407,6 +475,34 @@ def create_gui(
             )
             if mirror_only:
                 df = df[df["is_mirror"] == True]  # noqa: E712
+
+            # Apply scoped text search if not using "All text fields"
+            if _scope_cols and name_pat:
+                try:
+                    pat = _re.compile(name_pat, _re.IGNORECASE)
+                except _re.error:
+                    pat = _re.compile(_re.escape(name_pat), _re.IGNORECASE)
+                text_mask = pd.Series(False, index=df.index)
+                for col in _scope_cols:
+                    if col in df.columns:
+                        text_mask |= df[col].fillna("").str.contains(pat, na=False)
+                df = df[text_mask]
+
+            # Content detail filters
+            if props_sel:
+                df = df[df["content_props"].astype(str).isin(props_sel)]
+            if rigplay_sel:
+                df = df[df["content_all_rigplay_styles"].astype(str).isin(rigplay_sel)]
+            if uni_style_sel:
+                df = df[df["content_uniform_style"].astype(str).isin(uni_style_sel)]
+            if horiz_sel != "All":
+                df = df[df["content_horizontal_move"] == (1 if horiz_sel == "Yes" else 0)]
+            if vert_sel != "All":
+                df = df[df["content_vertical_move"] == (1 if vert_sel == "Yes" else 0)]
+            if complex_sel != "All":
+                df = df[df["content_complex_action"] == (1 if complex_sel == "Yes" else 0)]
+            if repeated_sel != "All":
+                df = df[df["content_repeated_action"] == (1 if repeated_sel == "Yes" else 0)]
 
             _filtered_df[0] = df
             # Preserve existing selections across filter changes
@@ -440,19 +536,66 @@ def create_gui(
             else:  # ── preview motion ──
                 g1_path  = row.get("move_g1_path", "")
                 csv_path = (Path(bones_seed_base) / g1_path).resolve() if g1_path else None
+                _META_LABELS = [
+                    ("Package",      "package"),
+                    ("Category",     "category"),
+                    ("Duration",     None),  # special
+                    ("Mirror",       "is_mirror"),
+                    ("Gender",       "actor_gender"),
+                    ("Height",       "actor_height"),
+                    ("Description",  "content_short_description"),
+                    ("Description 2","content_short_description_2"),
+                    ("Movement type","content_type_of_movement"),
+                    ("Body position","content_body_position"),
+                    ("Horiz. move",  "content_horizontal_move"),
+                    ("Vert. move",   "content_vertical_move"),
+                    ("Props",        "content_props"),
+                    ("Complex action","content_complex_action"),
+                    ("Repeated action","content_repeated_action"),
+                    ("Rigplay style","content_all_rigplay_styles"),
+                    ("Uniform style","content_uniform_style"),
+                    ("Natural desc", "content_natural_desc_1"),
+                    ("Technical desc","content_technical_description"),
+                    ("Profession",   "actor_profession"),
+                    ("Age (yr)",     "actor_age_yr"),
+                    ("Weight (kg)",  "actor_weight_kg"),
+                    ("Height (cm)",  "actor_height_cm"),
+                    ("CSV path",     "move_g1_path"),
+                ]
+
+                def _build_meta_html(row, move_name: str) -> str:
+                    import html as _html
+                    frames = row.get("move_duration_frames", 0) or 0
+                    cells = []
+                    for label, col in _META_LABELS:
+                        if col is None:  # duration special case
+                            val_s = f"{frames} fr ({frames/120:.1f} s)"
+                        else:
+                            val = row.get(col, None)
+                            if val is None or (isinstance(val, float) and pd.isna(val)):
+                                continue
+                            val_s = str(val).strip()
+                            if val_s in ("", "nan", "0", "0.0"):
+                                if col not in ("content_horizontal_move", "content_vertical_move",
+                                               "content_complex_action", "content_repeated_action"):
+                                    continue
+                        cells.append(
+                            f'<span class="mk">{_html.escape(label)}</span>'
+                            f'<span class="mv">{_html.escape(val_s)}</span>'
+                        )
+                    grid = '<div class="meta-grid">' + "".join(cells) + "</div>"
+                    title = f'<div class="meta-title">{_html.escape(move_name)}</div>'
+                    return f'<div class="meta-panel">{title}{grid}</div>'
+
                 if csv_path and csv_path.exists():
                     viewer_server.set_motion(csv_path.read_text(encoding="utf-8"), move_name)
-                    preview_info = (
-                        f"**{move_name}**  \n"
-                        f"Package: `{row.get('package', '?')}`  |  "
-                        f"Category: `{row.get('category', '?')}`  |  "
-                        f"Duration: {row.get('move_duration_frames', '?')} frames "
-                        f"({row.get('move_duration_frames', 0) / 120:.1f} s)  \n"
-                        f"Gender: `{row.get('actor_gender', '?')}`  |  "
-                        f"Mirror: `{row.get('is_mirror', '?')}`"
-                    )
+                    preview_info = _build_meta_html(row, move_name)
                 else:
-                    preview_info = f"**{move_name}** — CSV not found: `{g1_path}`"
+                    import html as _html
+                    preview_info = (
+                        f'<div class="meta-panel"><div class="meta-title">{_html.escape(move_name)}</div>'
+                        f'<p style="font-size:.8em;opacity:.6">CSV not found:<br><code>{_html.escape(str(g1_path))}</code></p></div>'
+                    )
                 return gr.skip(), gr.skip(), preview_info
 
         def on_refresh_selected():
@@ -473,6 +616,22 @@ def create_gui(
             if _filtered_df[0] is None:
                 return gr.skip(), ""
             return _safe_display(_filtered_df[0], set()), ""
+
+        def on_add_conjugates():
+            """For each selected motion add its mirror partner (or original if mirror selected)."""
+            if not _selected_names[0]:
+                return gr.skip(), gr.skip()
+            all_names = set(parser.df["move_name"].tolist())
+            to_add = set()
+            for name in list(_selected_names[0]):
+                conj = name[:-2] if name.endswith("_M") else name + "_M"
+                if conj in all_names:
+                    to_add.add(conj)
+            _selected_names[0] |= to_add
+            new_sel = "\n".join(sorted(_selected_names[0]))
+            if _filtered_df[0] is not None:
+                return _safe_display(_filtered_df[0], _selected_names[0]), new_sel
+            return gr.skip(), new_sel
 
         def do_export(
             selection_text, urdf, out_dir, out_struct, out_fps, backend, batch_sz,
@@ -573,9 +732,11 @@ def create_gui(
 
         # ── Wire up events ──────────────────────────────────────────────
         _filter_inputs = [
-            name_box, pkg_check, cat_check, mirror_radio,
+            name_box, name_scope_radio, pkg_check, cat_check, mirror_radio,
             min_dur_slider, max_dur_slider, mov_type_dd, bod_pos_dd,
             gender_radio, height_check,
+            props_dd, rigplay_dd, uni_style_dd,
+            horiz_radio, vert_radio, complex_radio, repeated_radio,
         ]
         apply_btn.click(
             fn=apply_filter,
@@ -588,6 +749,7 @@ def create_gui(
             outputs=[result_table, selection_box, motion_info],
         )
         select_all_btn.click(fn=on_select_all, inputs=[], outputs=[result_table, selection_box])
+        add_conj_btn.click(fn=on_add_conjugates, inputs=[], outputs=[result_table, selection_box])
         clear_btn.click(fn=on_clear, inputs=[], outputs=[result_table, selection_box])
         refresh_sel_btn.click(fn=on_refresh_selected, inputs=[], outputs=[result_table])
         export_btn.click(
